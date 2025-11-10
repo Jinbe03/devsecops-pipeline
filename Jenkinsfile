@@ -15,12 +15,19 @@ pipeline {
                 sh 'python3 app.py'
             }
         }
-
+        
         stage('Security Scan') {
             steps {
                 echo 'Instalando dependencias y ejecutando Bandit...'
-                sh 'pip install -r requirements.txt'
-                sh 'bandit -r . || true'
+                script {
+                    docker.image('python:3.9-slim').inside('--user=root') {
+                        sh '''
+                            pip install -r requirements.txt
+                            bandit -r . -f txt -o bandit-report.txt || true
+                            cat bandit-report.txt
+                        '''
+                    }
+                }
             }
         }
     }
